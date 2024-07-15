@@ -154,5 +154,5 @@ if data is not None:
     form.write(f"Evaluating: {glide_num} and {emdat_num}")
     match = form.radio("Do the two selected cases match?", ["True", "False"], captions=["These cases refer to the same event", "These cases do not refer to the same event"])
     confidence = form.select_slider("How confident are you in your answer?", options=["Not Confident","Confident","Very Confident"])
-    comments = form.text_area("Do you have any additional comments or notes?")
+    #comments = form.text_area("Do you have any additional comments or notes?")
     submitted = form.form_submit_button("Submit Evaluation")
