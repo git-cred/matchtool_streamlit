@@ -169,7 +169,7 @@ if data is not None:
     submitted = form.form_submit_button("Submit Evaluation")
     if submitted == True:
         conn = st.connection("gsheets", type=GSheetsConnection)
-        sheet = conn.read(worksheet="Evaluation Submissions")
+        sheet = conn.read(worksheet="Evaluation Submissions",ttl=0)
         st.dataframe(sheet)
         new_index = len(sheet)+1
         new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
