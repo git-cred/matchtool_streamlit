@@ -93,7 +93,7 @@ def grab_glide(ID):
     comments = glide_case["comments"].iloc[0]
     left.divider()
     left.write("Comments:")
-    left.write(f"\"{comments}\"")
+    left.write(f"\"{GLIDE comments}\"")
 
 def grab_emdat(ID):
     #st.dataframe(sheet)
