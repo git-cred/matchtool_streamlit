@@ -1,7 +1,14 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 import json
 import numpy as np
+
+
+
+conn = st.connection("gsheets", type=GSheetsConnection)
+sheet = conn.read(worksheet="Evaluation Submissions")
+
 
 # Initialize session state
 if 'greater_index' not in st.session_state:
@@ -87,6 +94,7 @@ def grab_glide(ID):
     left.write(f"\"{comments}\"")
 
 def grab_emdat(ID):
+    #st.dataframe(sheet)
     emdat_case = EMDAT[EMDAT["EMDAT_ID"] == ID]
 
     date_right.subheader(f"EMDAT\: {emdat_num}")
@@ -129,6 +137,7 @@ st.subheader("Upload Your Potential Match Index")
 data = st.file_uploader("Select your file...")
 if data is not None:
     dataframe = pd.read_excel(data)
+    st.dataframe(sheet)
 
     back, forward = st.columns(2)
 
@@ -150,9 +159,15 @@ if data is not None:
     grab_emdat(emdat_num)
 
     st.divider()
-    form = st.form(key="eval_form")
+    name = st.text_input("Reviewer's Name")
+    form = st.form(key="eval_form", clear_on_submit=True)
     form.write(f"Evaluating: {glide_num} and {emdat_num}")
-    match = form.radio("Do the two selected cases match?", ["True", "False"], captions=["These cases refer to the same event", "These cases do not refer to the same event"])
+    match = form.radio("Do the two selected cases match?", ["False", "True"], captions=["These cases do not refer to the same event", "These cases do refer to the same event"])
     confidence = form.select_slider("How confident are you in your answer?", options=["Not Confident","Confident","Very Confident"])
-    #comments = form.text_area("Do you have any additional comments or notes?")
+    comments = form.text_area("Do you have any additional comments or notes?")
     submitted = form.form_submit_button("Submit Evaluation")
+    if submitted == True:
+        new_line = pd.DataFrame([[name, emdat_num, glide_num, match, confidence, comments]], columns= ["Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
+        sheet = pd.concat([sheet, new_line])
+        conn.update(worksheet="Evaluation Submissions", data=sheet)
+        st.write("Successfully Submitted!")
