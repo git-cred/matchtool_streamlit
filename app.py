@@ -4,11 +4,6 @@ import pandas as pd
 import json
 import numpy as np
 
-
-
-
-
-
 # Initialize session state
 if 'greater_index' not in st.session_state:
     st.session_state["greater_index"] = 0
@@ -22,13 +17,11 @@ country_translation = json.load(open('iso_dict.json', 'r'))
 
 
 def case_select(df):
-    # greater_back = back.button("", use_container_width=True, key="gb")
     glide_list = dataframe["GLIDE_ID"].unique()
     greater_back = back.button("⟵", use_container_width=True, key=1)
     if greater_back:
         st.session_state["greater_index"] -= 1
         st.session_state["lesser_index"] = 0
-    # greater_forward = forward.button("", use_container_width=True, key="gf")
     greater_forward = forward.button("⟶", use_container_width=True, key=2)
     if greater_forward:
         st.session_state["greater_index"] += 1
@@ -40,14 +33,11 @@ def case_select(df):
 def match_select(df, ID):
 
     emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"]==ID]).unique()
-    #right.dataframe(eligible_emdat)
     if len(emdat_list) != 1:
         subback, subforward = forward.columns(2)
-        # greater_back = back.button("", use_container_width=True, key="gb")
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
         if lesser_back:
             st.session_state["lesser_index"] -= 1
-        # greater_forward = forward.button("", use_container_width=True, key="gf")
         lesser_forward = subforward.button("⟶", use_container_width=True, key=4)
         if lesser_forward:
             st.session_state["lesser_index"] += 1
@@ -170,11 +160,9 @@ if data is not None:
     if submitted == True:
         conn = st.connection("gsheets", type=GSheetsConnection)
         sheet = conn.read(worksheet="Evaluation Submissions",ttl=0)
-        st.dataframe(sheet)
         new_index = len(sheet)+1
         new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
         updated_sheet = pd.concat([sheet, new_line], ignore_index=True)
-        st.dataframe(updated_sheet)
         conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
