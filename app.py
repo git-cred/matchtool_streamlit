@@ -6,8 +6,7 @@ import numpy as np
 
 
 
-conn = st.connection("gsheets", type=GSheetsConnection)
-sheet = conn.read(worksheet="Evaluation Submissions")
+
 
 
 # Initialize session state
@@ -169,8 +168,12 @@ if data is not None:
     comments = form.text_area("Do you have any additional comments or notes?")
     submitted = form.form_submit_button("Submit Evaluation")
     if submitted == True:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        sheet = conn.read(worksheet="Evaluation Submissions")
+
         new_index = len(sheet)+1
         new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
         sheet = pd.concat([sheet, new_line])
         conn.update(worksheet="Evaluation Submissions", data=sheet)
         st.write("Successfully Submitted!")
+        st.dataframe(new_line)
