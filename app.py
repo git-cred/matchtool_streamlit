@@ -24,6 +24,7 @@ country_translation = json.load(open('iso_dict.json', 'r'))
 
 def case_select(df):
     # greater_back = back.button("", use_container_width=True, key="gb")
+    glide_list = dataframe["GLIDE_ID"].unique()
     greater_back = back.button("⟵", use_container_width=True, key=1)
     if greater_back:
         st.session_state["greater_index"] -= 1
@@ -33,14 +34,15 @@ def case_select(df):
     if greater_forward:
         st.session_state["greater_index"] += 1
         st.session_state["lesser_index"] = 0
-
-    glide_num = (df["GLIDE_ID"].unique())[st.session_state["greater_index"]]
+    glide_num = glide_list[st.session_state["greater_index"]]
+    count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index'])}/{len(glide_list) - 1}")
     return glide_num
 
 def match_select(df, ID):
-    eligible_emdat = (df["EMDAT_ID"][df["GLIDE_ID"]==ID]).unique()
+
+    emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"]==ID]).unique()
     #right.dataframe(eligible_emdat)
-    if len(eligible_emdat) != 1:
+    if len(emdat_list) != 1:
         subback, subforward = forward.columns(2)
         # greater_back = back.button("", use_container_width=True, key="gb")
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
@@ -50,15 +52,14 @@ def match_select(df, ID):
         lesser_forward = subforward.button("⟶", use_container_width=True, key=4)
         if lesser_forward:
             st.session_state["lesser_index"] += 1
-        if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(eligible_emdat)-1:
+        if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list)-1:
             st.session_state["lesser_index"] = 0
-
-    emdat_num = eligible_emdat[st.session_state["lesser_index"]]
+        count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index'])}/{len(emdat_list) - 1}")
+    emdat_num = emdat_list[st.session_state["lesser_index"]]
     return emdat_num
 
 def grab_glide(ID):
     glide_case = GLIDE[GLIDE["GLIDE_ID"] == ID]
-
     date_left.subheader(f"GLIDE\: {glide_num}")
 
     time = pd.DataFrame()
@@ -80,6 +81,7 @@ def grab_glide(ID):
     place["Location"] = glide_case["location"]
     location_left.dataframe(place, use_container_width=True)
 
+    killed_left.subheader("Impact Statistics")
     killed = glide_case["killed"]
     killed_left.dataframe(killed, use_container_width=True)
     injured = glide_case["injured"]
@@ -118,6 +120,7 @@ def grab_emdat(ID):
     place["Location"] = emdat_case["Location"]
     location_right.dataframe(place, use_container_width=True)
 
+    killed_right.subheader("Impact Statistics")
     killed = emdat_case["Total Deaths"]
     killed_right.dataframe(killed, use_container_width=True)
     injured = emdat_case["No. Injured"]
@@ -137,8 +140,9 @@ st.subheader("Upload Your Potential Match Index")
 data = st.file_uploader("Select your file...")
 if data is not None:
     dataframe = pd.read_excel(data)
-    back, forward = st.columns(2)
 
+    count_left, count_right = st.columns(2)
+    back, forward = st.columns(2)
     glide_num = case_select(dataframe)
     emdat_num = match_select(dataframe, glide_num)
     st.divider()
