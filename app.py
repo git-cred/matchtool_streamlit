@@ -170,10 +170,11 @@ if data is not None:
     if submitted == True:
         conn = st.connection("gsheets", type=GSheetsConnection)
         sheet = conn.read(worksheet="Evaluation Submissions")
-
+        st.dataframe(sheet)
         new_index = len(sheet)+1
         new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
         updated_sheet = pd.concat([sheet, new_line], ignore_index=True)
+        st.dataframe(updated_sheet)
         conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
