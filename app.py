@@ -173,7 +173,7 @@ if data is not None:
 
         new_index = len(sheet)+1
         new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
-        sheet = pd.concat([sheet, new_line])
-        conn.update(worksheet="Evaluation Submissions", data=sheet)
+        updated_sheet = pd.concat([sheet, new_line])
+        conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
