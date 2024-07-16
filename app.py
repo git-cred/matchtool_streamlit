@@ -137,8 +137,6 @@ st.subheader("Upload Your Potential Match Index")
 data = st.file_uploader("Select your file...")
 if data is not None:
     dataframe = pd.read_excel(data)
-    st.dataframe(sheet)
-
     back, forward = st.columns(2)
 
     glide_num = case_select(dataframe)
