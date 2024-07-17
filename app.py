@@ -167,11 +167,11 @@ data = st.file_uploader("Select your file...")
 if data is not None:
     dataframe = pd.read_excel(data)
 
-    #select_manual = st.form(key="select_form", clear_on_submit=True)
-    #case = (select_manual.number_input("Select index number:", step=1) - 1)
-    #jump = select_manual.form_submit_button("Go to:")
-    #if jump:
-    #    st.session_state["greater_index"] = case
+    select_manual = st.form(key="select_form", clear_on_submit=True)
+    case = (select_manual.number_input("Select index number:", step=1) - 1)
+    jump = select_manual.form_submit_button("Go to:")
+    if jump:
+        st.session_state["greater_index"] = case
 
     count_left, count_right = st.columns(2)
     back, forward = st.columns(2)
@@ -218,9 +218,10 @@ if data is not None:
                                          "Confidence", "Comments"])
         updated_sheet = pd.concat([sheet, new_line], ignore_index=True)
 
+
         # The sheet is updated with the new submission, and then the completion is indicated to the user, along with
         # a copy of the submitted evaluation.
-        #conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
+        conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
         st.write(st.session_state)
