@@ -5,7 +5,6 @@ import json
 import time
 import numpy as np
 
-
 # Initialize session state indexes. Greater index controls the GLIDE case selected, and lesser index selects the
 # potential EMDAT cases that match with that GLIDE case. These session state variables are edited by func.
 # case_select and match_select.
@@ -22,8 +21,10 @@ EMDAT = pd.read_csv("public_emdat_2004_formatted.csv")
 event_dict = json.load(open("GLIDE_eventdict.json", "r"))
 country_translation = json.load(open('iso_dict.json', 'r'))
 
+
 def reset_time():
     st.session_state["start_time"] = time.time()
+
 
 # This function creates the buttons that control the selected glide case, and selects a GLIDE case to check against
 # EMDAT cases. Input "df" is the index of all potential matches, used to identify the unique list of GLIDE cases to
@@ -42,15 +43,16 @@ def case_select(df):
         st.session_state["lesser_index"] = 0
         reset_time()
     glide_num = glide_list[st.session_state["greater_index"]]
-    count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index'])+1}/{len(glide_list)}")
+    count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index']) + 1}/{len(glide_list)}")
     return glide_num
+
 
 # This function creates the buttons that control the selected EMDAT case, which only appear if there are multiple
 # EMDAT cases to check against a GLIDE case. Returns the EMDAT case selected.
 
 def match_select(df, ID):
     global start_time
-    emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"]==ID]).unique()
+    emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"] == ID]).unique()
     if len(emdat_list) != 1:
         subback, subforward = forward.columns(2)
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
@@ -61,12 +63,13 @@ def match_select(df, ID):
         if lesser_forward:
             st.session_state["lesser_index"] += 1
             reset_time()
-        if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list)-1:
+        if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list) - 1:
             st.session_state["lesser_index"] = 0
             reset_time()
-        count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index'])+1}/{len(emdat_list)}")
+        count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index']) + 1}/{len(emdat_list)}")
     emdat_num = emdat_list[st.session_state["lesser_index"]]
     return emdat_num
+
 
 # This function uses the glide_num to pull information on the respective GLIDE num. The info is then displayed in
 # multiple columns.
@@ -107,6 +110,7 @@ def grab_glide(ID):
     left.divider()
     left.write("GLIDE Comments:")
     left.write(f"\"{comments}\"")
+
 
 # This function uses the emdat_num to pull information on the respective EMDAT num. The info is then displayed in
 # multiple columns.
@@ -164,6 +168,12 @@ data = st.file_uploader("Select your file...", on_change=reset_time())
 if data is not None:
     dataframe = pd.read_excel(data)
 
+    select_manual = st.form(key="select_form", clear_on_submit=True)
+    case = (select_manual.number_input("Select index number:", step=1) - 1)
+    jump = select_manual.form_submit_button("Go to:")
+    if jump:
+        st.session_state["greater_index"] = case
+
     count_left, count_right = st.columns(2)
     back, forward = st.columns(2)
     glide_num = case_select(dataframe)
@@ -187,21 +197,25 @@ if data is not None:
     name = st.text_input("Reviewer's Name")
     form = st.form(key="eval_form", clear_on_submit=True)
     form.write(f"Evaluating: {glide_num} and {emdat_num}")
-    match = form.radio("Do the two selected cases match?", ["False", "True"], captions=["These cases do not refer to the same event", "These cases do refer to the same event"])
-    confidence = form.select_slider("How confident are you in your answer?", options=["Not Confident","Confident","Very Confident"])
+    match = form.radio("Do the two selected cases match?", ["False", "True"],
+                       captions=["These cases do not refer to the same event",
+                                 "These cases do refer to the same event"])
+    confidence = form.select_slider("How confident are you in your answer?",
+                                    options=["Not Confident", "Confident", "Very Confident"])
     comments = form.text_area("Do you have any additional comments or notes?")
     submitted = form.form_submit_button("Submit Evaluation")
-    if submitted == True:
-
+    if submitted:
         # Note the dependency on the secrets.toml file for connection requirements. Cache duration must be zero in
         # order for the sheet to be updated reliably.
         conn = st.connection("gsheets", type=GSheetsConnection)
         sheet = conn.read(worksheet="Evaluation Submissions", ttl=0)
 
-        new_index = len(sheet)+1
+        new_index = len(sheet) + 1
         end_time = round(time.time(), 2)
         duration = end_time - st.session_state["start_time"]
-        new_line = pd.DataFrame([[new_index, duration, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Duration (seconds)", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
+        new_line = pd.DataFrame([[new_index, duration, name, emdat_num, glide_num, match, confidence, comments]],
+                                columns=["Index", "Duration (seconds)", "Name", "EMDAT_ID", "GLIDE_ID", "Match",
+                                         "Confidence", "Comments"])
         updated_sheet = pd.concat([sheet, new_line], ignore_index=True)
 
         # The sheet is updated with the new submission, and then the completion is indicated to the user, along with
