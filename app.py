@@ -2,7 +2,9 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 import json
+import time
 import numpy as np
+
 
 # Initialize session state indexes. Greater index controls the GLIDE case selected, and lesser index selects the
 # potential EMDAT cases that match with that GLIDE case. These session state variables are edited by func.
@@ -12,6 +14,8 @@ if 'greater_index' not in st.session_state:
     st.session_state["greater_index"] = 0
 if 'lesser_index' not in st.session_state:
     st.session_state["lesser_index"] = 0
+if 'start_time' not in st.session_state:
+    st.session_state["start_time"] = 0
 
 GLIDE = pd.read_csv("GLIDE_formatted.csv")
 EMDAT = pd.read_csv("public_emdat_2004_formatted.csv")
@@ -28,10 +32,12 @@ def case_select(df):
     if greater_back:
         st.session_state["greater_index"] -= 1
         st.session_state["lesser_index"] = 0
+        st.session_state["start_time"] = time.time()
     greater_forward = forward.button("⟶", use_container_width=True, key=2)
     if greater_forward:
         st.session_state["greater_index"] += 1
         st.session_state["lesser_index"] = 0
+        st.session_state["start_time"] = time.time()
     glide_num = glide_list[st.session_state["greater_index"]]
     count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index'])+1}/{len(glide_list)}")
     return glide_num
@@ -40,18 +46,21 @@ def case_select(df):
 # EMDAT cases to check against a GLIDE case. Returns the EMDAT case selected.
 
 def match_select(df, ID):
-
+    global start_time
     emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"]==ID]).unique()
     if len(emdat_list) != 1:
         subback, subforward = forward.columns(2)
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
         if lesser_back:
             st.session_state["lesser_index"] -= 1
+            st.session_state["start_time"] = time.time()
         lesser_forward = subforward.button("⟶", use_container_width=True, key=4)
         if lesser_forward:
             st.session_state["lesser_index"] += 1
+            st.session_state["start_time"] = time.time()
         if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list)-1:
             st.session_state["lesser_index"] = 0
+            st.session_state["start_time"] = time.time()
         count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index'])+1}/{len(emdat_list)}")
     emdat_num = emdat_list[st.session_state["lesser_index"]]
     return emdat_num
@@ -187,7 +196,9 @@ if data is not None:
         sheet = conn.read(worksheet="Evaluation Submissions", ttl=0)
 
         new_index = len(sheet)+1
-        new_line = pd.DataFrame([[new_index, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
+        end_time = round(time.time(), 2)
+        duration = end_time - st.session_state["start_time"]
+        new_line = pd.DataFrame([[new_index, duration, name, emdat_num, glide_num, match, confidence, comments]], columns=["Index", "Duration (seconds)", "Name", "EMDAT_ID", "GLIDE_ID", "Match", "Confidence", "Comments"])
         updated_sheet = pd.concat([sheet, new_line], ignore_index=True)
 
         # The sheet is updated with the new submission, and then the completion is indicated to the user, along with
