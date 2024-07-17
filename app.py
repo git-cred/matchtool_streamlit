@@ -14,7 +14,7 @@ if 'greater_index' not in st.session_state:
 if 'lesser_index' not in st.session_state:
     st.session_state["lesser_index"] = 0
 if 'start_time' not in st.session_state:
-    st.session_state["start_time"] = 0
+    st.session_state["start_time"] = time.time()
 
 GLIDE = pd.read_csv("GLIDE_formatted.csv")
 EMDAT = pd.read_csv("public_emdat_2004_formatted.csv")
@@ -36,12 +36,12 @@ def case_select(df):
     if greater_back:
         st.session_state["greater_index"] -= 1
         st.session_state["lesser_index"] = 0
-        reset_time()
+        st.session_state["start_time"] = time.time()
     greater_forward = forward.button("⟶", use_container_width=True, key=2)
     if greater_forward:
         st.session_state["greater_index"] += 1
         st.session_state["lesser_index"] = 0
-        reset_time()
+        st.session_state["start_time"] = time.time()
     glide_num = glide_list[st.session_state["greater_index"]]
     count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index']) + 1}/{len(glide_list)}")
     return glide_num
@@ -51,21 +51,20 @@ def case_select(df):
 # EMDAT cases to check against a GLIDE case. Returns the EMDAT case selected.
 
 def match_select(df, ID):
-    global start_time
     emdat_list = (df["EMDAT_ID"][df["GLIDE_ID"] == ID]).unique()
     if len(emdat_list) != 1:
         subback, subforward = forward.columns(2)
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
         if lesser_back:
             st.session_state["lesser_index"] -= 1
-            reset_time()
+            st.session_state["start_time"] = time.time()
         lesser_forward = subforward.button("⟶", use_container_width=True, key=4)
         if lesser_forward:
             st.session_state["lesser_index"] += 1
-            reset_time()
+            st.session_state["start_time"] = time.time()
         if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list) - 1:
             st.session_state["lesser_index"] = 0
-            reset_time()
+            st.session_state["start_time"] = time.time()
         count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index']) + 1}/{len(emdat_list)}")
     emdat_num = emdat_list[st.session_state["lesser_index"]]
     return emdat_num
@@ -159,7 +158,7 @@ st.divider()
 st.markdown("This portal exists as an internal tool for validating the potential matches resulting from the EM-DAT "
             "interoperability machine learning model. Thank you for your effort and contribution.")
 st.subheader("Upload Your Potential Match Index")
-data = st.file_uploader("Select your file...", on_change=reset_time())
+data = st.file_uploader("Select your file...")
 
 # Once a file has been uploaded, the previous functions are called in order to build the tool. Columns are called to
 # structure the web page correctly. The final input tools are used for collecting the evaluation, which is then
@@ -168,11 +167,11 @@ data = st.file_uploader("Select your file...", on_change=reset_time())
 if data is not None:
     dataframe = pd.read_excel(data)
 
-    select_manual = st.form(key="select_form", clear_on_submit=True)
-    case = (select_manual.number_input("Select index number:", step=1) - 1)
-    jump = select_manual.form_submit_button("Go to:")
-    if jump:
-        st.session_state["greater_index"] = case
+    #select_manual = st.form(key="select_form", clear_on_submit=True)
+    #case = (select_manual.number_input("Select index number:", step=1) - 1)
+    #jump = select_manual.form_submit_button("Go to:")
+    #if jump:
+    #    st.session_state["greater_index"] = case
 
     count_left, count_right = st.columns(2)
     back, forward = st.columns(2)
@@ -209,10 +208,11 @@ if data is not None:
         # order for the sheet to be updated reliably.
         conn = st.connection("gsheets", type=GSheetsConnection)
         sheet = conn.read(worksheet="Evaluation Submissions", ttl=0)
+        st.write(st.session_state)
 
         new_index = len(sheet) + 1
-        end_time = round(time.time(), 2)
-        duration = end_time - st.session_state["start_time"]
+        end_time = time.time()
+        duration = round(end_time - st.session_state["start_time"], 2)
         new_line = pd.DataFrame([[new_index, duration, name, emdat_num, glide_num, match, confidence, comments]],
                                 columns=["Index", "Duration (seconds)", "Name", "EMDAT_ID", "GLIDE_ID", "Match",
                                          "Confidence", "Comments"])
@@ -220,6 +220,7 @@ if data is not None:
 
         # The sheet is updated with the new submission, and then the completion is indicated to the user, along with
         # a copy of the submitted evaluation.
-        conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
+        #conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
+        st.write(st.session_state)
