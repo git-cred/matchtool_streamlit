@@ -22,6 +22,9 @@ EMDAT = pd.read_csv("public_emdat_2004_formatted.csv")
 event_dict = json.load(open("GLIDE_eventdict.json", "r"))
 country_translation = json.load(open('iso_dict.json', 'r'))
 
+def reset_time():
+    st.session_state["start_time"] = time.time()
+
 # This function creates the buttons that control the selected glide case, and selects a GLIDE case to check against
 # EMDAT cases. Input "df" is the index of all potential matches, used to identify the unique list of GLIDE cases to
 # check.
@@ -32,12 +35,12 @@ def case_select(df):
     if greater_back:
         st.session_state["greater_index"] -= 1
         st.session_state["lesser_index"] = 0
-        st.session_state["start_time"] = time.time()
+        reset_time()
     greater_forward = forward.button("⟶", use_container_width=True, key=2)
     if greater_forward:
         st.session_state["greater_index"] += 1
         st.session_state["lesser_index"] = 0
-        st.session_state["start_time"] = time.time()
+        reset_time()
     glide_num = glide_list[st.session_state["greater_index"]]
     count_left.subheader(f"GLIDE Case: {(st.session_state['greater_index'])+1}/{len(glide_list)}")
     return glide_num
@@ -53,14 +56,14 @@ def match_select(df, ID):
         lesser_back = subback.button("⟵", use_container_width=True, key=3)
         if lesser_back:
             st.session_state["lesser_index"] -= 1
-            st.session_state["start_time"] = time.time()
+            reset_time()
         lesser_forward = subforward.button("⟶", use_container_width=True, key=4)
         if lesser_forward:
             st.session_state["lesser_index"] += 1
-            st.session_state["start_time"] = time.time()
+            reset_time()
         if st.session_state["lesser_index"] < 0 or st.session_state["lesser_index"] > len(emdat_list)-1:
             st.session_state["lesser_index"] = 0
-            st.session_state["start_time"] = time.time()
+            reset_time()
         count_right.subheader(f"EMDAT Case: {(st.session_state['lesser_index'])+1}/{len(emdat_list)}")
     emdat_num = emdat_list[st.session_state["lesser_index"]]
     return emdat_num
@@ -152,7 +155,7 @@ st.divider()
 st.markdown("This portal exists as an internal tool for validating the potential matches resulting from the EM-DAT "
             "interoperability machine learning model. Thank you for your effort and contribution.")
 st.subheader("Upload Your Potential Match Index")
-data = st.file_uploader("Select your file...")
+data = st.file_uploader("Select your file...", on_change=reset_time())
 
 # Once a file has been uploaded, the previous functions are called in order to build the tool. Columns are called to
 # structure the web page correctly. The final input tools are used for collecting the evaluation, which is then
