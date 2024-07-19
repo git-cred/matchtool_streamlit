@@ -158,6 +158,7 @@ st.divider()
 st.markdown("This portal exists as an internal tool for validating the potential matches resulting from the EM-DAT "
             "interoperability machine learning model. Thank you for your effort and contribution.")
 st.subheader("Upload Your Potential Match Index")
+name = st.text_input("Reviewer's Name")
 data = st.file_uploader("Select your file...")
 
 # Once a file has been uploaded, the previous functions are called in order to build the tool. Columns are called to
@@ -165,8 +166,9 @@ data = st.file_uploader("Select your file...")
 # submitted when the form is completed to the google sheet.
 
 if data is not None:
+    if name is None or name == "":
+        raise Exception("You must enter a name")
     dataframe = pd.read_excel(data)
-
     select_manual = st.form(key="select_form", clear_on_submit=True)
     case = (select_manual.number_input("Select index number:", step=1) - 1)
     jump = select_manual.form_submit_button("Go to:")
@@ -193,7 +195,6 @@ if data is not None:
     grab_emdat(emdat_num)
 
     st.divider()
-    name = st.text_input("Reviewer's Name")
     form = st.form(key="eval_form", clear_on_submit=True)
     form.write(f"Evaluating: {glide_num} and {emdat_num}")
     match = form.radio("Do the two selected cases match?", ["False", "True"],
