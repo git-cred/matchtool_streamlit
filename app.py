@@ -21,6 +21,7 @@ EMDAT = pd.read_csv("public_emdat_2004_formatted.csv")
 event_dict = json.load(open("GLIDE_eventdict.json", "r"))
 country_translation = json.load(open('iso_dict.json', 'r'))
 
+sheet_name = "Sheet1"
 
 def reset_time():
     st.session_state["start_time"] = time.time()
@@ -208,7 +209,7 @@ if data is not None:
         # Note the dependency on the secrets.toml file for connection requirements. Cache duration must be zero in
         # order for the sheet to be updated reliably.
         conn = st.connection("gsheets", type=GSheetsConnection)
-        sheet = conn.read(worksheet="Evaluation Submissions", ttl=0)
+        sheet = conn.read(worksheet=sheet_name, ttl=0)
         st.write(st.session_state)
 
         new_index = len(sheet) + 1
@@ -222,7 +223,7 @@ if data is not None:
 
         # The sheet is updated with the new submission, and then the completion is indicated to the user, along with
         # a copy of the submitted evaluation.
-        conn.update(worksheet="Evaluation Submissions", data=updated_sheet)
+        conn.update(worksheet=sheet_name, data=updated_sheet)
         st.write("Successfully Submitted!")
         st.dataframe(new_line)
         st.write(st.session_state)
